@@ -75,9 +75,9 @@ def transformData(text: str) -> pd.DataFrame:
     temp_list = np.array(temp_list)
 
     # You can directly write the data like that, but we prefer to use the pandas dataframe
-    with open("data.txt", "r+") as dataFile:
-        for item in temp_list:
-            dataFile.write(item + "\n")
+    # with open("data.txt", "r+") as dataFile:
+    #     for item in temp_list:
+    #         dataFile.write(item + "\n")
 
     # Let's reshape the array like originally in the pdf
     matrix = temp_list.reshape(rows, values_per_row)
