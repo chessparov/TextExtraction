@@ -144,3 +144,19 @@ dtfSecondTable.to_excel("typeK_page2.xlsx")
 # Now if we want we can glue together the tables and export them in different ways
 dtfTypeK = pd.concat([dtfFirstTable, dtfSecondTable])
 dtfTypeK.to_excel("typeK.xlsx")
+
+# Let's proceed to the third page
+third_page = convert_to_text.pages[2]
+third_page_text = third_page.extract_text()
+
+third_page_table = getTable(third_page_text, "-260", "MAXIMUM")
+
+third_page_cols = 13
+third_page_rows = 127
+
+dtfThirdTable = transformData(third_page_table,
+                              third_page_rows,
+                              third_page_cols
+                              )
+dtfThirdTable.to_excel("typeE.xlsx")
+# dtfThirdTable.to_csv("typeE.csv")
