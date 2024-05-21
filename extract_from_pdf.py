@@ -8,10 +8,10 @@ def getTable(page_text: str, begin_word: str, end_word: str) -> str:
     This function takes the whole page as a long string and isolates
     only the worthy data. You have to manually check, by simply printing the whole page, which
     words are the boundaries of the data you're looking for.
-    :param end_word:
-    :param begin_word:
-    :param page_text:
-    :return:
+    :param end_word: First word of the non-relevant section, following the relevant section
+    :param begin_word: First word of the relevant section
+    :param page_text: Raw text
+    :return: A string containing the processed text
     """
 
     if begin_word in page_text and end_word in page_text:
@@ -23,18 +23,21 @@ def getTable(page_text: str, begin_word: str, end_word: str) -> str:
         return "Target not found!"
 
 
-def transformData(text: str) -> pd.DataFrame:
+def transformData(text: str,
+                  rows: int,
+                  cols: int,
+                  where_to_insert: int | None = None,
+                  what_to_insert: list | None = None) -> pd.DataFrame:
     """
     Pass the already isolated text containing only the values. Process it in order to separate correctly
     the values and save it in tabular form in a pandas dataframe.
-    :param text:
-    :return:
+    :param what_to_insert: In case of missing values, add them manually
+    :param where_to_insert: Index of where to insert the missing values
+    :param cols: Number of cols of the dataframe
+    :param rows: Number of rows of the Dataframe
+    :param text: Actual text to process
+    :return: A pandas dataframe containing the tabular data of the values
     """
-
-    # Those values are manually counted for simplicity, but it doesn't take much time
-    # as the values are already in groups of 5
-    values_per_row = 13
-    rows = 107
 
     # First cycle for separating values
     temp_list = []
@@ -71,6 +74,11 @@ def transformData(text: str) -> pd.DataFrame:
         temp_list[ind] = lstFirstParts[i]
         temp_list.insert(ind, lstSecondParts[i])
 
+    # Insert missing values if present
+    if what_to_insert is not None:
+        for element in what_to_insert:
+            temp_list.insert(where_to_insert, element)
+
     # Convert to a numpy array to use the reshape method
     temp_list = np.array(temp_list)
 
@@ -80,7 +88,7 @@ def transformData(text: str) -> pd.DataFrame:
     #         dataFile.write(item + "\n")
 
     # Let's reshape the array like originally in the pdf
-    matrix = temp_list.reshape(rows, values_per_row)
+    matrix = temp_list.reshape(rows, cols)
 
     # Header for the dataframe, useful for visual inspections
     # you can later save the data without the header
@@ -100,8 +108,39 @@ first_page = convert_to_text.pages[0]
 first_page_text = first_page.extract_text()
 
 # Process the text
-table_text = getTable(first_page_text, "-260", "MAXIMUM")
-dtfTable = transformData(table_text)
+first_table = getTable(first_page_text, "-260", "MAXIMUM")
 
-# Save the data in whatever file. Pandas offer different options. If there's not the
-dtfTable.to_excel("typeK_page1.xlsx")
+# Those values are manually counted for simplicity, but it doesn't take much time
+# as the values are already in groups of 5
+first_page_cols = 13
+first_page_rows = 107
+dtfFirstTable = transformData(first_table, first_page_rows, first_page_cols)
+
+# Save the data in whatever file. Pandas offer different options. If there's not the desired option
+# you can always use the syntax at line 78
+dtfFirstTable.to_excel("typeK_page1.xlsx")
+
+# Let's proceed to the second page
+second_page = convert_to_text.pages[1]
+second_page_text = second_page.extract_text()
+
+second_page_table = getTable(second_page_text, "800", "TYPE")
+
+second_page_cols = 13
+second_page_rows = 58
+
+# Added additional arguments in order to complete correctly the dataframe. How did I came up with this?
+# I simply made it run without the arguments, got the error "cannot reshape array of size 746 in size (58, 13)",
+# so I took a look at the pdf and saw the table had some missing values, so I added those arguments and added the blank
+# elements in the 745° position
+dtfSecondTable = transformData(second_page_table,
+                               second_page_rows,
+                               second_page_cols,
+                               745,
+                               ["", "", "", "", "", "", "", ""]
+                               )
+dtfSecondTable.to_excel("typeK_page2.xlsx")
+
+# Now if we want we can glue together the tables and export them in different ways
+dtfTypeK = pd.concat([dtfFirstTable, dtfSecondTable])
+dtfTypeK.to_excel("typeK.xlsx")
