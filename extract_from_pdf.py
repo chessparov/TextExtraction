@@ -160,3 +160,29 @@ dtfThirdTable = transformData(third_page_table,
                               )
 dtfThirdTable.to_excel("typeE.xlsx")
 # dtfThirdTable.to_csv("typeE.csv")
+
+#######################################################################
+# FLATTEN
+#######################################################################
+
+# Lets take the typeE dataframe as an example and flatten it.
+new_header = ["Temperature", "Voltage"]
+# Let's create the temperature array
+temperatures = np.arange(-270, 1001, 1)
+
+# Before eliminating all the unnecessary columns, we have to keep the last value of col "0"
+last_value = dtfThirdTable["0"][third_page_rows - 1]
+
+# keep only necessary columns
+dtfThirdTable = dtfThirdTable.drop(["°C", "0"], axis=1)
+
+# Let's create the voltages array and convert it to floats
+voltages = dtfThirdTable.to_numpy().flatten()
+voltages = np.append(voltages, last_value)
+voltages = voltages.astype(np.float32)
+
+dtfThirdTable = pd.DataFrame([temperatures, voltages])
+dtfThirdTable = dtfThirdTable.transpose()
+dtfThirdTable.columns = new_header
+
+dtfThirdTable.to_excel("typeE_flattened.xlsx")
